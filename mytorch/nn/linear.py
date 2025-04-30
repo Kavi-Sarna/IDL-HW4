@@ -27,51 +27,40 @@ class Linear:
         
         Handles arbitrary batch dimensions like PyTorch
         """
-        # TODO: Implement forward pass
         
         # Store input for backward pass
         self.A = A
-
-        self.N = np.prod(A.shape[:-1])  # Batch size
-        self.C0 = A.shape[-1]  # Number of input features
-
-        # Reshape A to ensure it's 2D
-        A_2D = A.reshape(self.N, self.C0)
-
-        # Compute Z using matrix multiplication and broadcasting
+        input_shape = A.shape
+        self.N = np.prod(input_shape[:-1])  # Batch size
+        self.C0 = input_shape[-1]  # Number of input features
+        A_2D = A.reshape(self.N, self.C0)  # Reshape A to ensure it's 2D
         Z = np.dot(A_2D, self.W.T) + self.b  # Broadcasting b to match A's shape
         # Reshape Z to match the expected output shape
-        if len(A.shape) > 2:
-            Z = Z.reshape(*A.shape[:-1], self.W.shape[0])
-        
+        if len(input_shape) > 2:
+            Z = Z.reshape(*input_shape[:-1], self.W.shape[0])      
         return Z
-        # raise NotImplementedError
 
     def backward(self, dLdZ):
         """
         :param dLdZ: Gradient of loss wrt output Z (*, out_features)
         :return: Gradient of loss wrt input A (*, in_features)
         """
-        # TODO: Implement backward pass
-        
-        batch_size = np.prod(self.A.shape[:-1])
-        in_features = self.A.shape[-1]
-
-        A_2d = self.A.reshape(batch_size, in_features)
-
+        input_shape = self.A.shape
+    
+        # Reshape inputs and gradients to 2D for computation
+        batch_size = np.prod(input_shape[:-1]) 
+        in_features = input_shape[-1]
+        A_2D = self.A.reshape(batch_size, in_features)
+    
         # Reshape dLdZ to 2D: (batch_size, out_features)
         dLdZ_2D = dLdZ.reshape(batch_size, -1)
-
-        # Compute gradients (refer to the equations in the writeup)
-        # self.dLdA = NotImplementedError
-        self.dLdA = np.dot(dLdZ_2D, self.W)
-        # self.dLdW = NotImplementedError
-        self.dLdW = np.dot(dLdZ_2D.T, A_2d)
-        # self.dLdb = NotImplementedError
-        self.dLdb = np.sum(dLdZ_2D, axis=0)
-        # self.dLdA = NotImplementedError
-        self.dLdA = self.dLdA.reshape(*self.A.shape)
-        
-        # Return gradient of loss wrt input
-        # raise NotImplementedError
-        return self.dLdA
+    
+        # Compute gradients
+        dLdA_2D = np.dot(dLdZ_2D, self.W)  # (batch_size, in_features)
+        self.dLdW = np.dot(dLdZ_2D.T, A_2D)  # (out_features, in_features)
+        self.dLdb = np.sum(dLdZ_2D, axis=0)  # (out_features,)
+    
+        # Reshape dLdA back to match input shape
+        dLdA = dLdA_2D.reshape(*input_shape)
+    
+        return dLdA

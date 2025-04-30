@@ -26,26 +26,25 @@ def PadMask(padded_input, input_lengths):
             - non-padding positions are marked with False.
     """
     # TODO: Implement PadMask
-    # raise NotImplementedError # Remove once implemented
-    if len(padded_input.shape) > 2:
-        # Input shape is (N, T, ...)
-        N, T = padded_input.shape[0], padded_input.shape[1]
-    else:
-        # Input shape is (N, T)
-        N, T = padded_input.shape
+    batch_size = padded_input.size(0)
+    seq_length = padded_input.size(1)
     
-    # Create a range tensor [0, 1, 2, ..., T-1] repeated for each batch
-    # Shape: (N, T)
-    positions = torch.arange(T, device=padded_input.device).expand(N, T)
+    # Create a range tensor for the sequence positions
+    # Shape: (1, seq_length)
+    positions = torch.arange(seq_length, device=padded_input.device).unsqueeze(0)
     
-    # Create a tensor of lengths expanded for comparison
-    # Shape: (N, 1)
+    # Expand the positions tensor to match the batch size
+    # Shape: (batch_size, seq_length)
+    positions = positions.expand(batch_size, -1)
+    
+    # Expand the input_lengths tensor to have the right shape for comparison
+    # Shape: (batch_size, 1)
     lengths = input_lengths.unsqueeze(1)
     
-    # Create mask: True where position >= length (padding positions)
-    # Shape: (N, T)
+    # Create the mask by comparing positions with lengths
+    # Positions >= lengths are padding (True), otherwise they are valid (False)
     mask = positions >= lengths
-
+    
     return mask
 
 ''' 
@@ -72,20 +71,25 @@ def CausalMask(padded_input):
             - causal positions (can attend to) are marked with False.
     """
     # TODO: Implement CausalMask
-    # raise NotImplementedError # Remove once implemented
-
-    # Get sequence length
-    if len(padded_input.shape) > 2:
-        # Input shape is (N, T, ...)
-        T = padded_input.shape[1]
+    if padded_input.dim() > 2:
+        # Input is (batch_size, seq_length, feature_dim)
+        seq_length = padded_input.size(1)
     else:
-        # Input shape is (N, T)
-        T = padded_input.shape[1]
+        # Input is (batch_size, seq_length)
+        seq_length = padded_input.size(1)
     
-    # Create upper triangular mask (excluding diagonal)
-    # torch.triu creates an upper triangular matrix with 1s
-    # The second parameter (1) makes it start at the first superdiagonal (excludes diagonal)
-    # We want True for positions that should be masked (shouldn't attend to)
-    mask = torch.triu(torch.ones(T, T, device=padded_input.device), diagonal=1).bool()
+    # Create indices for rows and columns
+    i = torch.arange(seq_length, device=padded_input.device)
+    j = torch.arange(seq_length, device=padded_input.device)
+    
+    # Create a mask where each position can only attend to itself and previous positions
+    # This means we want to mask out (set to True) positions where j > i
+    # Create grid indices
+    i, j = torch.meshgrid(i, j, indexing='ij')
+    
+    # Create the mask: True for positions that should NOT attend to each other
+    # (upper triangular part excluding diagonal)
+    mask = j > i
     
     return mask
+

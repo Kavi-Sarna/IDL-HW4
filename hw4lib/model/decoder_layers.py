@@ -57,11 +57,11 @@ class SelfAttentionDecoderLayer(nn.Module):
         dropout = dropout
        
         # TODO: Initialize the sublayers      
-        # self.self_attn = NotImplementedError # Masked self-attention layer
+        #self.self_attn = NotImplementedError # Masked self-attention layer
         self.self_attn = SelfAttentionLayer(d_model, num_heads, dropout=dropout)
-        # self.ffn = NotImplementedError # Feed-forward network
+        #self.ffn = NotImplementedError # Feed-forward network
         self.ffn = FeedForwardLayer(d_model, d_ff, dropout=dropout)
-        # raise NotImplementedError # Remove once implemented
+        #raise NotImplementedError # Remove once implemented
 
     def forward(self, x: torch.Tensor, key_padding_mask: Optional[torch.Tensor] = None, attn_mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         '''
@@ -77,15 +77,14 @@ class SelfAttentionDecoderLayer(nn.Module):
         '''
         # TODO: Implement forward: Follow the figure in the writeup
         x_norm = x
-        # x, mha_attn_weights = NotImplementedError, NotImplementedError
+        #x, mha_attn_weights = NotImplementedError, NotImplementedError
         x, mha_attn_weights = self.self_attn(x, key_padding_mask=key_padding_mask, attn_mask=attn_mask)
         x = x + x_norm
         x_norm = x
         x = self.ffn(x)
-        
         # TODO: Return the output tensor and attention weights
-        # raise NotImplementedError # Remove once implemented
         return x , mha_attn_weights
+        #raise NotImplementedError # Remove once implemented
 
 ## -------------------------------------------------------------------------------------------------    
 class CrossAttentionDecoderLayer(nn.Module):
@@ -108,15 +107,14 @@ class CrossAttentionDecoderLayer(nn.Module):
         num_heads = num_heads
         d_ff = d_ff
         dropout = dropout
-
         # TODO: Initialize the sublayers  
-        # self.self_attn  = NotImplementedError # Masked self-attention layer
+        #self.self_attn  = NotImplementedError # Masked self-attention layer
+        #self.cross_attn = NotImplementedError # Cross-attention layer
+        #self.ffn        = NotImplementedError # Feed-forward network
         self.self_attn  = SelfAttentionLayer(d_model, num_heads, dropout=dropout)
-        # self.cross_attn = NotImplementedError # Cross-attention layer
         self.cross_attn = CrossAttentionLayer(d_model, num_heads, dropout=dropout)
-        # self.ffn        = NotImplementedError # Feed-forward network
         self.ffn        = FeedForwardLayer(d_model, d_ff, dropout=dropout)
-        # raise NotImplementedError # Remove once implemented
+        #raise NotImplementedError # Remove once implemented
 
     def forward(self, x: torch.Tensor, enc_output: torch.Tensor, dec_key_padding_mask: Optional[torch.Tensor] = None, enc_key_padding_mask: Optional[torch.Tensor] = None, attn_mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         '''
@@ -134,13 +132,15 @@ class CrossAttentionDecoderLayer(nn.Module):
         '''
         # TODO: Implement forward: Follow the figure in the writeup
 
-        # x, self_attn_weights  = NotImplementedError, NotImplementedError
+        #x, self_attn_weights  = NotImplementedError, NotImplementedError
+        #x, cross_attn_weights = NotImplementedError, NotImplementedError
+       
         x, self_attn_weights = self.self_attn(x, key_padding_mask=dec_key_padding_mask, attn_mask=attn_mask)
-        # x, cross_attn_weights = NotImplementedError, NotImplementedError
         x, cross_attn_weights = self.cross_attn(x, enc_output, key_padding_mask=enc_key_padding_mask)
         x = self.ffn(x)
 
-        # TODO: Return the output tensor and attention weights    
-        # raise NotImplementedError # Remove once implemented
+        # TODO: Return the output tensor and attention weights
         return x, self_attn_weights, cross_attn_weights
+            
+        #raise NotImplementedError # Remove once implemented
 ## -------------------------------------------------------------------------------------------------    
